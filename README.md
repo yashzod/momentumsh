@@ -1,7 +1,9 @@
 # momentumsh
 
 #Requirements
+
 python 3.9 (won't work for version>3.9)
+
 node.js
 
 #Setup
