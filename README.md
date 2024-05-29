@@ -1,23 +1,25 @@
-# momentumsh
+# MomentumSH
 
-#Requirements
+## Requirements
 
-python 3.9 (won't work for version>3.9)
+- Python 3.9 (won't work for versions >3.9)
+- Node.js
 
-node.js
+## Setup
 
+1. Create a virtual environment using Python 3.9:
+    ```bash
+    python -m venv venv
+    ```
 
+2. Install Python dependencies:
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-#Setup
+3. Start the FastAPI app:
+    ```bash
+    uvicorn views:app --reload
+    ```
 
-python -m venv venv
-
-python install -r requirements.txt
-
-
-
-#start fast api app
-
-uvicorn views:app --reload
-
-Access UI with index.html
+4. Access the UI with `index.html`
