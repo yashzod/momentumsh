@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Get Repo Info</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      color: #333;
+    }
+    .container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+    input[type="email"], input[type="password"], input[type="text"] {
+      width: calc(100% - 20px);
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 10px 20px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #sign-in-error, #sign-up-error {
+      color: red;
+      margin-top: 10px;
+    }
+    #repo-info {
+        text-align: left;
+        background-color: #f9f9f9;
+        padding: 5px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        margin-top: 20px;
+        overflow-y: auto; /* Enable vertical scrollbar when content exceeds container height */
+        max-height: calc(100vh - 250px); /* Set maximum height to fill remaining space, adjust as needed */
+        }
+    #repo-info-table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+    }
+    #repo-info-table th, #repo-info-table td {
+      border: 1px solid #ddd;
+      padding: 3px;
+      text-align: left;
+    }
+    #repo-info-table th {
+      background-color: #f2f2f2;
+    }
+    .code-block {
+        max-height: 150px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        padding: 8px;
+        background-color: #f4f4f4;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+        }
+  </style>
+  <!-- Firebase App (the core Firebase SDK) -->
+  <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.8.4/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut as firebaseSignOut } from "https://www.gstatic.com/firebasejs/9.8.4/firebase-auth.js";
+
+    // Your Firebase configuration object
+    const firebaseConfig = {
+      apiKey: "AIzaSyBQqBDcgxxG6kjjzFu27QFVG_EPBmmsLH0",
+      authDomain: "momentumsh-fcb97.firebaseapp.com",
+      projectId: "momentumsh-fcb97",
+      storageBucket: "momentumsh-fcb97.appspot.com",
+      messagingSenderId: "25480042478",
+      appId: "1:25480042478:web:c87727dca97e850675a0ff",
+      measurementId: "G-BKLVCW3LX5"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // Sign In function
+    const signIn = () => {
+      const email = document.getElementById('sign-in-email').value;
+      const password = document.getElementById('sign-in-password').value;
+
+      signInWithEmailAndPassword(auth, email, password)
+        .then(userCredential => {
+          // Signed in 
+          const user = userCredential.user;
+          document.getElementById('user-email').innerText = user.email;
+          document.getElementById('sign-in-form').style.display = 'none';
+          document.getElementById('sign-up-form').style.display = 'none';
+          document.getElementById('user-info').style.display = 'block';
+        })
+        .catch(error => {
+          document.getElementById('sign-in-error').innerText = error.message;
+        });
+    };
+
+    // Sign Up function
+    const signUp = () => {
+      const email = document.getElementById('sign-up-email').value;
+      const password = document.getElementById('sign-up-password').value;
+
+      createUserWithEmailAndPassword(auth, email, password)
+        .then(userCredential => {
+          // Signed up 
+          const user = userCredential.user;
+          document.getElementById('user-email').innerText = user.email;
+          document.getElementById('sign-in-form').style.display = 'none';
+          document.getElementById('sign-up-form').style.display = 'none';
+          document.getElementById('user-info').style.display = 'block';
+        })
+        .catch(error => {
+          document.getElementById('sign-up-error').innerText = error.message;
+        });
+    };
+
+    // Sign Out function
+    const signOut = () => {
+      firebaseSignOut(auth).then(() => {
+        document.getElementById('user-info').style.display = 'none';
+        document.getElementById('sign-in-form').style.display = 'block';
+        document.getElementById('sign-up-form').style.display = 'block';
+        document.getElementById('repo-info').innerHTML = '';
+      }).catch(error => {
+        console.error('Error signing out:', error);
+      });
+    };
+
+    // Submit GitHub URL function
+    const submitGithubUrl = () => {
+            const githubUrl = document.getElementById('github-url').value;
+            const user = auth.currentUser;
+            if (user && githubUrl) {
+                user.getIdToken().then(token => {
+                    fetch('http://127.0.0.1:8000/get_repo_info', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            email: user.email,
+                            githubUrl: githubUrl
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        const repoInfoDiv = document.getElementById('repo-info');
+                        repoInfoDiv.innerHTML = ''; // Clear previous content
+
+                        const result = data.result;
+                        for (const file in result) {
+                            if (result.hasOwnProperty(file)) {
+                                const functions = result[file];
+                                const fileDiv = document.createElement('div');
+                                fileDiv.innerHTML = `<h3>${file}</h3>`;
+                                
+                                functions.forEach((func, index) => {
+                                    const functionDiv = document.createElement('div');
+                                    functionDiv.innerHTML = `
+                                        <p><strong>File Name:</strong> ${file}</p>
+                                        <p><strong>Function Name:</strong> ${func.function_name}</p>
+                                        <p><strong>Class Name:</strong> ${func.class_name}</p>
+                                        <p><strong>Function Code:</strong> <pre class="code-block">${func.function_code}</pre></p>
+                                        <p><strong>Identifiers:</strong> ${func.identifiers.join(', ')}</p>
+                                        <br><br>
+                                    `;
+                                    if (index > 0) {
+                                        functionDiv.style.marginTop = '5px'; // Add margin between functions
+                                    }
+                                    fileDiv.appendChild(functionDiv);
+                                });
+                                
+                                repoInfoDiv.appendChild(fileDiv);
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching repo info:', error);
+                    });
+                });
+            }
+        };
+
+
+    // Attach functions to the window object to make them accessible globally
+    window.signOut = signOut;
+    window.submitGithubUrl = submitGithubUrl;
+
+    // Check if user is already signed in
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        document.getElementById('user-email').innerText = user.email;
+        document.getElementById('sign-in-form').style.display = 'none';
+        document.getElementById('sign-up-form').style.display = 'none';
+        document.getElementById('user-info').style.display = 'block';
+      } else {
+        document.getElementById('user-info').style.display = 'none';
+        document.getElementById('sign-in-form').style.display = 'block';
+        document.getElementById('sign-up-form').style.display = 'block';
+      }
+    });
+
+    // Attach event listeners
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('sign-in-button').addEventListener('click', signIn);
+      document.getElementById('sign-up-button').addEventListener('click', signUp);
+    });
+  </script>
+</head>
+<body>
+  <div class="container">
+    <br><br>
+    <h1>Get Repo Info</h1>
+
+    <!-- Sign In Form -->
+    <div id="sign-in-form">
+      <h2>Sign In</h2>
+      <input type="email" id="sign-in-email" placeholder="Email">
+      <input type="password" id="sign-in-password" placeholder="Password">
+      <button id="sign-in-button">Sign In</button>
+      <p id="sign-in-error"></p>
+    </div>
+
+    <!-- Sign Up Form -->
+    <div id="sign-up-form">
+      <h2>Sign Up</h2>
+      <input type="email" id="sign-up-email" placeholder="Email">
+      <input type="password" id="sign-up-password" placeholder="Password">
+      <button id="sign-up-button">Sign Up</button>
+      <p id="sign-up-error"></p>
+    </div>
+
+    <!-- User Info -->
+    <div id="user-info" style="display: none;">
+      <p>Signed in as: <span id="user-email"></span></p>
+      <input type="text" id="github-url" placeholder="Enter GitHub URL">
+      <button onclick="submitGithubUrl()">Submit</button>
+      <div id="repo-info"></div>
+      <button onclick="signOut()">Sign Out</button>
+    </div>
+  </div>
+</body>
+</html>
